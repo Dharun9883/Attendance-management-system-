@@ -1,176 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-  <!-- 🔴 REQUIRED FOR MOBILE -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- ✅ FIX 1: REQUIRED FOR MOBILE -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>QR Attendance | Madura Solution</title>
+<title>Madura Solution | Attendance</title>
 
-  <style>
-    *{
-      box-sizing:border-box;
-      font-family:'Segoe UI',sans-serif;
-    }
+<!-- QR -->
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-    body{
-      margin:0;
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:linear-gradient(135deg,#141e30,#243b55);
-      padding:15px;
-    }
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    .card{
-      width:100%;
-      max-width:430px;
-      background:#fff;
-      padding:30px 22px;
-      border-radius:18px;
-      box-shadow:0 20px 40px rgba(0,0,0,.35);
-      text-align:center;
-    }
+<!-- Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    .logo{
-      width:120px;
-      margin-bottom:10px;
-    }
+<style>
+*{
+  box-sizing:border-box;
+  font-family:'Segoe UI',sans-serif
+}
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#141e30,#243b55);
+}
+.card{
+  width:430px;
+  background:#fff;
+  padding:30px;
+  border-radius:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.35);
+  text-align:center;
+}
+.logo{
+  width:120px;
+  margin-bottom:10px;
+}
+h2{
+  margin:5px 0 20px;
+  color:#222;
+}
+input{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+button{
+  width:100%;
+  padding:12px;
+  margin-top:12px;
+  border:none;
+  border-radius:8px;
+  color:#fff;
+  cursor:pointer;
+}
+.btn-in{background:#1976d2}
+.btn-out{background:#388e3c}
+.btn-mgr{background:#6a1b9a}
+.btn-excel{background:#2e7d32}
+.btn-late{background:#c62828}
+.hide{display:none}
+.footer{
+  margin-top:10px;
+  font-size:12px;
+  color:#777;
+}
 
-    h2{
-      margin:5px 0 20px;
-      color:#222;
-      letter-spacing:1px;
-    }
-
-    input{
-      width:100%;
-      padding:12px;
-      margin-top:10px;
-      border-radius:8px;
-      border:1px solid #ccc;
-      font-size:14px;
-    }
-
-    input:focus{
-      outline:none;
-      border-color:#1976d2;
-    }
-
-    button{
-      width:100%;
-      padding:12px;
-      margin-top:12px;
-      border:none;
-      border-radius:8px;
-      font-size:15px;
-      color:#fff;
-      cursor:pointer;
-    }
-
-    .btn-in{background:#1976d2}
-    .btn-out{background:#388e3c}
-    .btn-mgr{background:#6a1b9a}
-    .btn-excel{background:#2e7d32}
-    .btn-late{background:#c62828}
-
-    hr{
-      margin:20px 0;
-      border:none;
-      height:1px;
-      background:#eee;
-    }
-
-    .footer{
-      margin-top:10px;
-      font-size:12px;
-      color:#777;
-    }
-
-    /* 📱 Mobile */
-    @media (max-width:480px){
-      .card{
-        padding:22px 16px;
-      }
-      h2{
-        font-size:18px;
-      }
-    }
-
-    /* 📱 Tablet */
-    @media (max-width:768px){
-      .card{
-        max-width:95%;
-      }
-    }
-
-    /* 🖥 Large Screens */
-    @media (min-width:1400px){
-      .card{
-        transform:scale(1.05);
-      }
-    }
-  </style>
+/* MOBILE */
+@media (max-width:480px){
+  body{padding:15px}
+  .card{width:100%;padding:20px}
+  .logo{width:80px}
+}
+</style>
 </head>
 
 <body>
 
-  <div class="card">
-    <!-- ✅ LOGO ADDED -->
-    <img src="logo.png" alt="Madura Solution" class="logo">
+<div class="card">
+  <img src="logo.png" class="logo">
+  <h2>Madura Solution</h2>
 
-    <h2>QR Attendance System</h2>
-
+  <div id="emp">
     <input id="eid" placeholder="Employee ID">
     <input id="ename" placeholder="Employee Name">
-
     <input id="edate" readonly>
     <input id="etime" readonly>
 
     <button class="btn-in" onclick="checkIn()">Check In</button>
     <button class="btn-out" onclick="checkOut()">Check Out</button>
-
-    <hr>
-
-    <input id="mpass" type="password" placeholder="Manager Password">
-    <button class="btn-mgr" onclick="managerLogin()">Manager Login</button>
-
-    <div class="footer">© Madura Solution</div>
   </div>
 
+  <hr>
+
+  <input id="mpass" type="password" placeholder="Manager Password">
+  <button class="btn-mgr" onclick="managerLogin()">Manager Login</button>
+
+  <div id="manager" class="hide">
+    <hr>
+    <button class="btn-excel" onclick="allExcel()">Download Full Report</button>
+    <button class="btn-late" onclick="lateExcel()">Late Login Report</button>
+  </div>
+
+  <div class="footer">© 2026 Madura Solution</div>
+</div>
+
 <script>
-  // 🔴 REQUIRED FOR MOBILE (DO NOT REMOVE)
-  const eid = document.getElementById("eid");
-  const ename = document.getElementById("ename");
-  const edate = document.getElementById("edate");
-  const etime = document.getElementById("etime");
-  const mpass = document.getElementById("mpass");
+/* ✅ FIX 2: REQUIRED FOR MOBILE */
+const eid = document.getElementById("eid");
+const ename = document.getElementById("ename");
+const edate = document.getElementById("edate");
+const etime = document.getElementById("etime");
+const mpass = document.getElementById("mpass");
+const manager = document.getElementById("manager");
 
-  function tick(){
-    const now = new Date();
-    edate.value = now.toLocaleDateString();
-    etime.value = now.toLocaleTimeString();
-  }
-  setInterval(tick,1000);
-  tick();
+/* FIREBASE */
+firebase.initializeApp({
+  apiKey:"AIzaSyCcdyU3qzwiYabU9Qrgc3yX2j0iPxEcQUQ",
+  projectId:"cms-management-e28df"
+});
+const db = firebase.firestore();
 
-  function checkIn(){
-    alert("Check In Successful");
-  }
+/* DATE & TIME */
+function tick(){
+  const n = new Date();
+  edate.value = n.toLocaleDateString();
+  etime.value = n.toLocaleTimeString();
+}
+setInterval(tick,1000);
 
-  function checkOut(){
-    alert("Check Out Successful");
+/* CHECK IN */
+function checkIn(){
+  if(!eid.value || !ename.value){
+    alert("Enter employee details");
+    return;
   }
+  const n = new Date();
+  const late = n.getHours()>9 || (n.getHours()==9 && n.getMinutes()>10);
 
-  function managerLogin(){
-    if(mpass.value==="admin"){
-      alert("Manager Login Success");
-    }else{
-      alert("Wrong Password");
-    }
+  db.collection("attendance").add({
+    empId:eid.value,
+    empName:ename.value,
+    date:n.toLocaleDateString(),
+    checkIn:n.toLocaleTimeString(),
+    checkOut:"",
+    workHours:"",
+    status:late?"Late":"Present"
+  }).then(()=>alert("Check-in successful"));
+}
+
+/* CHECK OUT */
+function checkOut(){
+  const today = new Date().toLocaleDateString();
+  db.collection("attendance")
+  .where("empId","==",eid.value)
+  .where("date","==",today)
+  .get().then(s=>{
+    if(s.empty){alert("No check-in found");return;}
+    s.forEach(d=>{
+      const x = d.data();
+      const inT = new Date(today+" "+x.checkIn);
+      const out = new Date();
+      const hrs = ((out-inT)/36e5).toFixed(2);
+
+      db.collection("attendance").doc(d.id).update({
+        checkOut:out.toLocaleTimeString(),
+        workHours:hrs
+      });
+      alert("Check-out successful");
+    });
+  });
+}
+
+/* MANAGER LOGIN */
+function managerLogin(){
+  if(mpass.value==="admin@123"){
+    manager.classList.remove("hide");
+    alert("Manager access granted");
+  } else {
+    alert("Wrong password");
   }
+}
+
+/* EXCEL */
+function allExcel(){
+  db.collection("attendance").get().then(s=>{
+    let a=[],i=1;
+    s.forEach(d=>{
+      const x=d.data();
+      a.push({
+        "S.No":i++,
+        "ID":x.empId,
+        "Name":x.empName,
+        "Date":x.date,
+        "In":x.checkIn,
+        "Out":x.checkOut,
+        "Hours":x.workHours,
+        "Status":x.status
+      });
+    });
+    exportXLS(a,"Attendance_Report.xlsx");
+  });
+}
+
+function lateExcel(){
+  db.collection("attendance").get().then(s=>{
+    let a=[],i=1;
+    s.forEach(d=>{
+      const x=d.data();
+      if(x.status==="Late"){
+        a.push({
+          "S.No":i++,
+          "ID":x.empId,
+          "Name":x.empName,
+          "Date":x.date,
+          "Login Time":x.checkIn
+        });
+      }
+    });
+    if(a.length==0){alert("No late logins");return;}
+    exportXLS(a,"Late_Login_Report.xlsx");
+  });
+}
+
+function exportXLS(data,file){
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Report");
+  XLSX.writeFile(wb,file);
+}
 </script>
 
 </body>
